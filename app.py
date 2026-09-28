@@ -9,7 +9,6 @@ import re
 import urllib.parse
 import edge_tts
 
-# 포트: 클라우드 환경변수 PORT 지원 (Hugging Face의 기본값 7860, Render 기본값 10000, 로컬 기본값 5000)
 PORT = int(os.environ.get("PORT", 7860))
 
 SILENT_MP3 = bytes.fromhex(
@@ -62,6 +61,16 @@ async def generate_speech_bytes(text: str, voice: str, rate: str = "+0%", pitch:
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+MIME_TYPES = {
+    '.html': 'text/html; charset=utf-8',
+    '.json': 'application/manifest+json; charset=utf-8',
+    '.js': 'application/javascript; charset=utf-8',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.ico': 'image/x-icon',
+    '.css': 'text/css; charset=utf-8'
+}
+
 class SoundBookHandler(http.server.BaseHTTPRequestHandler):
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
@@ -84,17 +93,24 @@ class SoundBookHandler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(NEURAL_VOICES, ensure_ascii=False).encode('utf-8'))
             return
 
-        if path == '/' or path == '/index.html':
-            filepath = os.path.join(BASE_DIR, 'index.html')
-            if os.path.exists(filepath):
+        # 정적 파일 서빙
+        req_file = 'index.html' if path in ('/', '') else path.lstrip('/')
+        filepath = os.path.join(BASE_DIR, req_file)
+
+        if os.path.exists(filepath) and os.path.isfile(filepath):
+            ext = os.path.splitext(filepath)[1].lower()
+            content_type = MIME_TYPES.get(ext, 'application/octet-stream')
+            try:
                 with open(filepath, 'rb') as f:
                     content = f.read()
                 self.send_response(200)
-                self.send_header('Content-Type', 'text/html; charset=utf-8')
+                self.send_header('Content-Type', content_type)
                 self.send_header('Content-Length', str(len(content)))
                 self.end_headers()
                 self.wfile.write(content)
                 return
+            except Exception as e:
+                print(f"[Error] Failed reading file {filepath}: {e}")
 
         self.send_response(404)
         self.end_headers()
@@ -144,7 +160,7 @@ class SoundBookHandler(http.server.BaseHTTPRequestHandler):
 def run_server():
     socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("0.0.0.0", PORT), SoundBookHandler) as httpd:
-        print(f"Cloud Server running on port {PORT}...")
+        print(f"Cloud Server running on port {PORT} with PWA support...")
         httpd.serve_forever()
 
 if __name__ == '__main__':

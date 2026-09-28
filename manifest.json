@@ -1,0 +1,25 @@
+{
+  "name": "소리책방 - 내 손안의 스마트 오디오북",
+  "short_name": "소리책방",
+  "description": "책과 텍스트를 고품질 AI 음성으로 읽어주는 나만의 오디오북 리더",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
